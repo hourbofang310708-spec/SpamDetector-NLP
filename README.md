@@ -30,3 +30,8 @@ Evaluated on a randomized, reproducible test set (`random.seed(42)`):
 | **Exp 6** | Bayes (0.50), Vector (0.40), Entropy (0.10) | 94.89% | 84.62% | 77.56% | 80.94% | 121 | 937 | 22 | 35 |
 
 > **Conclusion (Exp 5):** Balancing Vector Space (0.50) for semantic meaning and Bayes (0.40) for word probabilities—with Entropy (0.10) acting as an anomaly tiebreaker—yields an optimal **84.01% F1-Score** and cuts false alarms drastically.
+
+## Day 9: Model Calibration and 80/20 Train-Test Evaluation
+* **Action:** Implemented an 80/20 train-test split via `evaluate.py` to test against completely unseen data with a fixed random seed (`random.seed(42)`).
+* **Math Updates:** Calibrated Bayes with a `-1.81` log-odds penalty for dataset imbalance and shifted the Vector Space threshold to `mean_vector_ham + 0.10` to eliminate false positives.
+* **Result:** Achieved **95.43% Accuracy**, **82.21% Precision**, **85.90% Recall**, and an **84.01% F1-Score** in Experiment 5 (Vector 0.50, Bayes 0.40, Entropy 0.10).
