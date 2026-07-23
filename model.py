@@ -11,16 +11,12 @@ class SpamDetector:
         self.vector_axes = []
         self.average_scam_vector = []
         
-        # -----------------------------------------------------------------
-        # 🛠️ ADJUSTMENT 1: Data-Driven Normal Baselines (No Magic Numbers!)
-        # Stores the mathematical average of regular messages computed in train()
-        # -----------------------------------------------------------------
         self.mean_vector_ham = 0.0
         self.mean_entropy_ham = 0.0
 
     def train(self, filepath):
         raw_scam_messages = []
-        raw_ham_messages = []  # 🛠️ Store ham messages to calculate average baseline
+        raw_ham_messages = []  
         all_words_seen = Counter()
 
         # Open file safely
@@ -38,14 +34,13 @@ class SpamDetector:
 
                 if label == 'spam':
                     self.total_scams_seen += 1
-                    raw_scam_messages.append(words) # 🛠️ ADJUSTMENT 2: Populated raw_scam_messages so vector math works!
+                    raw_scam_messages.append(words) 
                     for word in words:
                         self.scam_word_counts[word] = self.scam_word_counts.get(word, 0) + 1
                 else:
                     self.total_normals_seen += 1
                     raw_ham_messages.append(message) # Store message text for ham baseline calculations
                     for word in words:
-                        # 🛠️ ADJUSTMENT 3: Fixed bug where scam_word_counts was used instead of normal_word_counts
                         self.normal_word_counts[word] = self.normal_word_counts.get(word, 0) + 1
 
         # Build 500-D Vector Vocabulary
@@ -71,9 +66,6 @@ class SpamDetector:
                 total_column_sum = sum(vector[i] for vector in raw_scam_vectors)
                 self.average_scam_vector[i] = total_column_sum / self.total_scams_seen
 
-        # -----------------------------------------------------------------
-        # 🛠️ ADJUSTMENT 4: Compute data-driven baselines for normal ("ham") messages!
-        # -----------------------------------------------------------------
         if raw_ham_messages:
             vector_scores_ham = [self._calculate_cosine_similarity(msg) for msg in raw_ham_messages]
             entropy_scores_ham = [self._calculate_entropy(msg) for msg in raw_ham_messages]
@@ -100,7 +92,6 @@ class SpamDetector:
                 normal_prob = self.normal_word_counts[word] / self.total_normals_seen
                 scam_evidence -= normal_prob
 
-        # 🛠️ ADJUSTMENT 5: Moved return OUTSIDE the for-loop! (It was returning after inspecting only 1 word!)
         return scam_evidence
 
     # ==========================================
@@ -119,10 +110,9 @@ class SpamDetector:
             entropy -= probability * math.log2(probability)
             
         if entropy > 4.2:
-            return 2.5  # High entropy signal
+            return 2.5  
         else:
-            return -1.5 # Normal language signal
-
+            return -1.5 
     # ==========================================
     # ENGINE 3: VECTOR MATH (COSINE SIMILARITY)
     # ==========================================
@@ -139,7 +129,6 @@ class SpamDetector:
             
         similarity = dot_product / (magnitude_user * magnitude_scam)
 
-        # 🛠️ ADJUSTMENT 6: Removed artificial `* 5.0` multiplier! Return pure 0.0 to 1.0 score.
         return similarity 
 
     def _sigmoid(self, z):
@@ -149,22 +138,15 @@ class SpamDetector:
     # ==========================================
     # THE MASTER DECISION MAKER
     # ==========================================
-    def predict(self, new_message, w_bayes=0.20, w_entropy=0.60, w_vector=0.20):
+    def predict(self, new_message, w_bayes=0.25, w_entropy=0.5, w_vector=0.25):
         # 1. Gather raw scores
         bayes_score = self._calculate_bayes(new_message)
-        entropy_score = self._calculate_entropy(new_message)
+        entropy_score= self._calculate_entropy(new_message)
         vector_score = self._calculate_cosine_similarity(new_message)
-        
-        # -------------------------------------------------------------
-        # 🛠️ ADJUSTMENT 7: Zero-Center around normal baselines (NO MAGIC NUMBERS!)
-        # -------------------------------------------------------------
-        c_bayes   = bayes_score                           # Bayes log-odds is naturally centered
-        c_entropy = entropy_score - self.mean_entropy_ham # Subtract training average
-        c_vector  = vector_score - self.mean_vector_ham   # Subtract training average
 
-        # -------------------------------------------------------------
-        # 🛠️ ADJUSTMENT 8: Apply single-pass ensemble weights
-        # -------------------------------------------------------------
+        c_bayes   = bayes_score - 1.81
+        c_entropy = entropy_score - self.mean_entropy_ham # Subtract training average
+        c_vector  = vector_score - (self.mean_vector_ham + 0.10)  # Subtract training average
         z = (w_bayes * c_bayes) + (w_entropy * c_entropy) + (w_vector * c_vector)
         
         final_probability = self._sigmoid(z)
