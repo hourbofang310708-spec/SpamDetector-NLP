@@ -42,3 +42,14 @@ Action: Replaced single-word extraction with a 500-dimensional bigram (word pair
 * **Math Updates:** Maintained core engine weights (w_bayes=0.40, w_entropy=0.10, w_vector=0.50) while transitioning vector space calculations from unigrams to adjacent word pair sequences.
 
 * **Result:** Achieved **94.89% Accuracy**, **83.22% Precision**, **79.49% Recall**, and an **81.31% F1-Score** (TP: 124, TN: 934, FP: 25, FN: 32).
+
+ # Unigram vs. Bigram vs. Hybrid Feature Space
+* **Objective:** Evaluate if adding adjacent word pairs (bigrams) or a combination of both improves contextual SMS scam detection over single words (unigrams).
+* **Context:** SMS messages are incredibly short and highly variable, making pattern extraction distinct from standard long-form email spam.
+* **Result:** The Unigram baseline remains definitively the most effective. Bigrams and Hybrid models introduced feature noise and suffered from data sparsity due to the short length of SMS texts, leading to decreased Recall and more False Positives.
+
+| Experiment | Configuration | Accuracy | Precision | Recall | F1-Score | TP | TN | FP | FN |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Exp 1 (Unigrams)** | `w_bayes=0.40, w_entropy=0.1, w_vector=0.50` | **95.16%** | 82.28% | **83.33%** | **82.80%** | 130 | 931 | 28 | 26 |
+| **Exp 2 (Bigrams)** | `w_bayes=0.40, w_entropy=0.1, w_vector=0.50` | 94.89% | **83.22%** | 79.49% | 81.31% | 124 | 934 | 25 | 32 |
+| **Exp 3 (Both)** | `w_bayes=0.40, w_entropy=0.1, w_vector=0.50` | 94.53% | 79.50% | 82.05% | 80.76% | 128 | 926 | 33 | 28 |

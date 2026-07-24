@@ -14,61 +14,63 @@ class SpamDetector:
         self.mean_vector_ham = 0.0
         self.mean_entropy_ham = 0.0
 
-    def extract_bigrams(self, text):
-        """Takes a message and breaks it into adjacent word pairs (bigrams)."""
+    def extract_features(self, text):
+        """Extracts BOTH single words (unigrams) and word pairs (bigrams)."""
         words = text.lower().split()
-        if len(words) < 2:  # Fixed: must be less than 2 to skip empty/single-word lists
-            return []
-        bigrams = [f"{words[i]} {words[i+1]}" for i in range(len(words) - 1)]
-        return bigrams
+        features = list(words)  
+        
+        if len(words) >= 2:    
+            bigrams = [f"{words[i]} {words[i+1]}" for i in range(len(words) - 1)]
+            features.extend(bigrams)
+            
+        return features
 
     def train(self, filepath): 
         raw_spam_messages = []
         raw_ham_messages = []  
         
-        # Reset counters for a fresh training session
         self.spam_word_counts = Counter()
         self.normal_word_counts = Counter()
         self.total_spams_seen = 0
         self.total_normals_seen = 0
 
-        bigram_counts = {}
+        feature_counts = {}
 
         # 1. Open file safely and read rows
         with open(filepath, mode='r', encoding='utf-8') as file:
             reader = csv.reader(file, delimiter='\t')
             for row in reader:
                 if len(row) < 2:
-                    continue  # skip blank lines
+                    continue  
                 
-                label = row[0].lower().strip()   # 'ham' or 'spam'
-                message = row[1].lower().strip() # the actual text
-                words = message.split()          # individual words
+                label = row[0].lower().strip()   
+                message = row[1].lower().strip() 
+                words = message.split()          
                 
                 if label == 'spam':
                     self.total_spams_seen += 1
-                    raw_spam_messages.append(message) # Store full message string for bigrams
+                    raw_spam_messages.append(message) 
                     self.spam_word_counts.update(words)
                 else:
                     self.total_normals_seen += 1
                     raw_ham_messages.append(message) 
                     self.normal_word_counts.update(words)
 
-        # 2. Build 500-D Vector Vocabulary exclusively from the "Spam Head" Bigrams
+        # 2. Build 500-D Vocabulary from BOTH Unigrams and Bigrams
         for msg in raw_spam_messages:
-            msg_bigrams = self.extract_bigrams(msg)
-            for bg in msg_bigrams:
-                bigram_counts[bg] = bigram_counts.get(bg, 0) + 1
+            msg_features = self.extract_features(msg)
+            for feature in msg_features:
+                feature_counts[feature] = feature_counts.get(feature, 0) + 1
                 
-        # Sort bigrams by frequency and lock in the top 500 most dangerous pairs
-        sorted_bigrams = sorted(bigram_counts.items(), key=lambda x: x[1], reverse=True)
-        self.vector_axes = [bg for bg, count in sorted_bigrams[:500]]
+        
+        sorted_features = sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)
+        self.vector_axes = [feat for feat, count in sorted_features[:500]]
 
-        # 3. Build Average Spam Vector using the bigram axes
+        # 3. Build Average Spam Vector using the combined axes
         raw_spam_vectors = []
         for msg in raw_spam_messages:
-            msg_bigrams = self.extract_bigrams(msg)
-            message_vector = [1 if axis_bg in msg_bigrams else 0 for axis_bg in self.vector_axes]
+            msg_features = self.extract_features(msg)
+            message_vector = [1 if axis_feat in msg_features else 0 for axis_feat in self.vector_axes]
             raw_spam_vectors.append(message_vector)
 
         num_axes = len(self.vector_axes)
@@ -88,8 +90,7 @@ class SpamDetector:
             self.mean_entropy_ham = sum(entropy_scores_ham) / len(entropy_scores_ham)
 
         print(f"[AI Brain Updated]: Learned from {self.total_spams_seen} spams and {self.total_normals_seen} normal messages.")
-        print(f"[Vector Space Configured]: Automatically mapped a {len(self.vector_axes)}-dimensional bigram vocabulary!")
-        print(f"[Baselines Computed]: Normal Vector Avg = {self.mean_vector_ham:.4f}, Normal Entropy Avg = {self.mean_entropy_ham:.4f}")
+        print(f"[Vector Space Configured]: Automatically mapped a {len(self.vector_axes)}-dimensional hybrid vocabulary!")
 
     # ==========================================
     # ENGINE 1: BAYESIAN PROBABILITY
@@ -129,13 +130,13 @@ class SpamDetector:
             return -1.5 
 
     # ==========================================
-    # ENGINE 3: VECTOR MATH (COSINE SIMILARITY - BIGRAMS)
+    # ENGINE 3: VECTOR MATH (COSINE SIMILARITY)
     # ==========================================
     def _calculate_cosine_similarity(self, text):
-        # Updated to use bigrams instead of single words for the vector engine!
-        message_bigrams = self.extract_bigrams(text)
+        # Now checks against BOTH single words and word pairs!
+        message_features = self.extract_features(text)
 
-        user_vector = [1 if axis_bg in message_bigrams else 0 for axis_bg in self.vector_axes]
+        user_vector = [1 if axis_feat in message_features else 0 for axis_feat in self.vector_axes]
         
         if not self.average_spam_vector or len(user_vector) != len(self.average_spam_vector):
             return 0.0
@@ -158,17 +159,14 @@ class SpamDetector:
     # THE MASTER DECISION MAKER
     # ==========================================
     def predict(self, new_message, w_bayes=0.40, w_entropy=0.1, w_vector=0.50):
-        # 1. Gather raw scores from all three engines
         bayes_score = self._calculate_bayes(new_message)
         entropy_score = self._calculate_entropy(new_message)
         vector_score = self._calculate_cosine_similarity(new_message)
 
-        # 2. Apply calibrated penalties and baselines
         c_bayes   = bayes_score - 1.81
         c_entropy = entropy_score - self.mean_entropy_ham 
         c_vector  = vector_score - (self.mean_vector_ham + 0.10)  
         
-        # 3. Combine using weights
         z = (w_bayes * c_bayes) + (w_entropy * c_entropy) + (w_vector * c_vector)
         
         final_probability = self._sigmoid(z)

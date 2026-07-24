@@ -61,6 +61,7 @@ Exp1 (unigrams)         w_bayes=0.40, w_entropy=0.1, w_vector=0.50           95.
 
 Exp2 (bigrams)          w_bayes=0.40, w_entropy=0.1, w_vector=0.50           94.89%       83.22%       79.49%  81.31%     124 934 25  32
 
+Exp3 ( both )           w_bayes=0.40, w_entropy=0.1, w_vector=0.50           94.53%       79.50%       82.05%  80.76%     128 926 33  28
 
              
 
