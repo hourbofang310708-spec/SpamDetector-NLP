@@ -35,3 +35,10 @@ Evaluated on a randomized, reproducible test set (`random.seed(42)`):
 * **Action:** Implemented an 80/20 train-test split via `evaluate.py` to test against completely unseen data with a fixed random seed (`random.seed(42)`).
 * **Math Updates:** Calibrated Bayes with a `-1.81` log-odds penalty for dataset imbalance and shifted the Vector Space threshold to `mean_vector_ham + 0.10` to eliminate false positives.
 * **Result:** Achieved **95.43% Accuracy**, **82.21% Precision**, **85.90% Recall**, and an **84.01% F1-Score** in Experiment 5 (Vector 0.50, Bayes 0.40, Entropy 0.10).
+
+  # Bigram Feature Space Evaluation
+Action: Replaced single-word extraction with a 500-dimensional bigram (word pair) vocabulary mapped exclusively from spam training messages.
+
+* **Math Updates:** Maintained core engine weights (w_bayes=0.40, w_entropy=0.10, w_vector=0.50) while transitioning vector space calculations from unigrams to adjacent word pair sequences.
+
+* **Result:** Achieved **94.89% Accuracy**, **83.22% Precision**, **79.49% Recall**, and an **81.31% F1-Score** (TP: 124, TN: 934, FP: 25, FN: 32).

@@ -39,7 +39,8 @@ Exp 7           vector heavily ( v = 0.70, b = e = 0.15 )           61.52%      
 ## Day 8: 
    # Vector Adjustment: Shifted threshold to average + 0.1 to prevent false positives.
    # Bayes Adjustment: Applied a -1.81 penalty to account for the imbalanced 86/14 ham-to-spam ratio. 
-Experiment       Engine Active                                      Accuracy                      Precision             Recall        F1-Score     TP  TN  FP  FN 
+Experiment       Engine Active                                      Accuracy                      Precision             Recall      F1-Score
+ TP  TN  FP  FN 
 
 Exp 1            eqaulity( all = 0.33)                              83.23%                        45.23%                94.23%        61.12%       147 781 178 9 
 
@@ -51,4 +52,16 @@ Exp 5            vector(0.5), bayes ( 0.4)                          95.43%      
 Exp 6            bayes(0.5), vector(0.4)                            94.89%                        84.62%                77.56%        80.94%       121 937 22  35
 
 Exp 7            Entropy(0.5)                                       83.23%                        45.23%                94.23%        61.12%       147 781 178 9
+
+## Day 9:
+    # 500_dimension used from the spam messages only. Since the Exp 5 ( Day 8 ) is the best overall. I am going to use the same for Day 9
+
+Experiment              Engine Acitve                                        Accuracy     Precision    Recall  F1-Score   TP  TN  FP  FN
+Exp1 (unigrams)         w_bayes=0.40, w_entropy=0.1, w_vector=0.50           95.16%       82.28%       83.33%  82.80%     130 931 28  26
+
+Exp2 (bigrams)          w_bayes=0.40, w_entropy=0.1, w_vector=0.50           94.89%       83.22%       79.49%  81.31%     124 934 25  32
+
+
+             
+
 
